@@ -1,30 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { AuthContext } from './AuthContext';
 import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from 'firebase/auth';
-import { auth, googleProvider } from '../Firebase/firebase.config';
-import toast from 'react-hot-toast';
+import { auth } from '../Firebase/firebase.config';
+
+import { GoogleAuthProvider } from "firebase/auth";
 
 const AuthProvider = ({ children }) => {
+    const googleProvider = new GoogleAuthProvider();
     const [user, setUser] = useState(null);
-    const [income, setIncome] = useState(0);
-    const [expense, setExpense] = useState(0);
-    const [balance, setBalance] = useState(0);
     const [loading, setLoading] = useState(true);
 
+
     const signUp = (email, password) => {
-        setLoading(true);
+
         return createUserWithEmailAndPassword(auth, email, password);
     };
 
     const LogIn = (email, password) => {
-        setLoading(true);
+
         return signInWithEmailAndPassword(auth, email, password);
     };
 
     const LogOut = () => {
-        setLoading(true);
-        toast.success("Successfully Signed Out");
-        
+
         return signOut(auth);
     };
 
@@ -33,13 +31,14 @@ const AuthProvider = ({ children }) => {
     };
 
     const GoogleLogin = () => {
+        setLoading(true);
         return signInWithPopup(auth, googleProvider);
     };
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
-            setLoading(false); // 
+            setLoading(false);
         });
         return () => unsubscribe();
     }, []);
@@ -54,12 +53,6 @@ const AuthProvider = ({ children }) => {
         LogOut,
         GoogleLogin,
         updateUser,
-        income,
-        setIncome,
-        expense,
-        setExpense,
-        balance,
-        setBalance
     };
 
     return (

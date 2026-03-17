@@ -25,6 +25,7 @@ const Navbar = () => {
     const { user, setUser, LogOut } = useContext(AuthContext);
     const [open, setOpen] = useState(false);
     const navigate = useNavigate();
+
     const handleSignOut = () => {
         LogOut()
             .then(() => {
@@ -33,7 +34,7 @@ const Navbar = () => {
             })
             .catch((err) => {
                 console.error(err);
-                toast.error('Failed to sign out',err.message);
+                toast.error('Failed to sign out', err.message);
             });
     };
 
@@ -42,114 +43,113 @@ const Navbar = () => {
         navigate(path);
     };
 
+    const navLinkClass = ({ isActive }) =>
+        `transition-all duration-300 ease-in-out px-4 py-2 rounded-full text-sm font-medium ${isActive
+            ? 'bg-primary/10 text-primary shadow-sm'
+            : 'text-foreground/70 hover:text-foreground hover:bg-secondary/50'
+        }`;
+
     const navLinks = (
         <>
-            <NavLink
-                to="/"
-                className={({ isActive }) =>
-                    `hover:text-primary transition ${isActive ? 'text-blue-500 text-lg font-semibold' : 'text-sm'}`}>
+            <NavLink to="/" className={navLinkClass}>
                 Home
             </NavLink>
-            <NavLink
-                to="/addTransaction"
-                className={({ isActive }) =>
-                    `hover:text-primary transition ${isActive ? 'text-blue-500 text-lg font-semibold' : 'text-sm'}`}>
+            <NavLink to="/addTransaction" className={navLinkClass}>
                 Add Transaction
             </NavLink>
-            <NavLink
-                to="/myTransaction"
-                className={({ isActive }) =>
-                    `hover:text-primary transition ${isActive ? 'text-blue-500 text-lg font-semibold' : 'text-sm'}`}>
+            <NavLink to="/myTransaction" className={navLinkClass}>
                 My Transactions
             </NavLink>
-            <NavLink
-                to="/reports"
-                className={({ isActive }) =>
-                    `hover:text-primary transition ${isActive ? 'text-blue-500 text-lg font-semibold' : 'text-sm'}`}>
+            <NavLink to="/reports" className={navLinkClass}>
                 Reports
             </NavLink>
         </>
     );
 
     return (
-        <div className="w-full flex justify-between items-center bg-white/20 backdrop-blur-md border p-3">
+        <div className="sticky top-0 z-50 w-full flex justify-between items-center bg-background/70 backdrop-blur-xl border-b border-border/40 px-6 py-3 shadow-sm transition-all duration-300">
             <div>
-                <Link to="/" className="text-xl font-bold">Fin-EASE</Link>
+                <Link to="/" className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                    Fin-EASE
+                </Link>
             </div>
-            <div className="hidden md:flex items-center space-x-6 font-medium">
+            <div className="hidden md:flex items-center space-x-2">
                 {navLinks}
             </div>
 
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-4">
                 <ModeToggle />
                 {user ?
                     <div className="flex items-center gap-3">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline">Account</Button>
+                                <Button variant="secondary" className="rounded-full px-5">Account</Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-xl border-border/50">
+                                <DropdownMenuLabel className="font-normal text-muted-foreground text-xs">My Account</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                    <Link to="/myProfile">My Profile</Link>
+                                <DropdownMenuItem className="rounded-xl cursor-pointer">
+                                    <Link className="w-full text-sm font-medium" to="/myProfile">My Profile</Link>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Button onClick={handleSignOut} variant="destructive">
+                        <Button onClick={handleSignOut} variant="outline" className="rounded-full text-destructive border-destructive/20 hover:bg-destructive/10">
                             Log Out
                         </Button>
                     </div>
                     :
                     <>
                         <Link to="/login">
-                            <Button variant="outline">Login</Button>
+                            <Button variant="ghost" className="rounded-full text-foreground/80 hover:text-foreground">Login</Button>
                         </Link>
                         <Link to="/signup">
-                            <Button>Signup</Button>
+                            <Button className="rounded-full px-6 shadow-md hover:shadow-lg transition-shadow">Signup</Button>
                         </Link>
                     </>
                 }
             </div>
 
-            <div className="md:hidden flex items-center space-x-2">
+            <div className="md:hidden flex items-center space-x-3">
                 <ModeToggle />
                 <Sheet open={open} onOpenChange={setOpen}>
                     <SheetTrigger asChild>
-                        <Button variant="outline" size="icon">
-                            <Menu className="h-5 w-5" />
+                        <Button variant="ghost" size="icon" className="rounded-full">
+                            <Menu className="h-6 w-6 text-foreground/80" />
                         </Button>
                     </SheetTrigger>
-                    <SheetContent side="right" className="w-full p-6 sm:w-80">
+                    <SheetContent side="right" className="w-full p-6 sm:w-80 rounded-l-3xl border-l-border/50 bg-background/95 backdrop-blur-xl">
                         <SheetHeader>
-                            <SheetTitle className="text-lg font-bold">
-                                <Link onClick={() => handleNavigate('/')} className="text-xl">Fin-EASE</Link>
+                            <SheetTitle className="text-left font-bold mt-2">
+                                <Link onClick={() => handleNavigate('/')} className="text-2xl tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                                    Fin-EASE
+                                </Link>
                             </SheetTitle>
                         </SheetHeader>
 
-                        <div className="mt-6 flex flex-col text-lg space-y-4">
-                            <button onClick={() => handleNavigate('/')} className="text-left hover:text-primary">Home</button>
-                            <button onClick={() => handleNavigate('/addTransaction')} className="text-left hover:text-primary">Add Transaction</button>
-                            <button onClick={() => handleNavigate('/myTransaction')} className="text-left hover:text-primary">My Transactions</button>
-                            <button onClick={() => handleNavigate('/reports')} className="text-left hover:text-primary">Reports</button>
-                            <hr className="my-3" />
+                        <div className="mt-8 flex flex-col space-y-2">
+                            <button onClick={() => handleNavigate('/')} className="text-left px-4 py-3 rounded-2xl text-base font-medium text-foreground/80 hover:bg-secondary/50 hover:text-foreground transition-all">Home</button>
+                            <button onClick={() => handleNavigate('/addTransaction')} className="text-left px-4 py-3 rounded-2xl text-base font-medium text-foreground/80 hover:bg-secondary/50 hover:text-foreground transition-all">Add Transaction</button>
+                            <button onClick={() => handleNavigate('/myTransaction')} className="text-left px-4 py-3 rounded-2xl text-base font-medium text-foreground/80 hover:bg-secondary/50 hover:text-foreground transition-all">My Transactions</button>
+                            <button onClick={() => handleNavigate('/reports')} className="text-left px-4 py-3 rounded-2xl text-base font-medium text-foreground/80 hover:bg-secondary/50 hover:text-foreground transition-all">Reports</button>
+
+                            <div className="h-px w-full bg-border/50 my-4" />
 
                             {user ?
                                 <>
-                                    <button onClick={() => handleNavigate('/myProfile')} className="text-left hover:text-primary">My Profile</button>
-                                    <Button onClick={handleSignOut} variant="destructive" className="w-full">
+                                    <button onClick={() => handleNavigate('/myProfile')} className="text-left px-4 py-3 rounded-2xl text-base font-medium text-foreground/80 hover:bg-secondary/50 hover:text-foreground transition-all">My Profile</button>
+                                    <Button onClick={handleSignOut} variant="outline" className="w-full rounded-2xl mt-4 text-destructive border-destructive/20 hover:bg-destructive/10">
                                         Log Out
                                     </Button>
                                 </>
                                 :
-                                <>
-                                    <Button onClick={() => handleNavigate('/login')} variant="outline" className="w-full">
+                                <div className="flex flex-col gap-3 mt-4">
+                                    <Button onClick={() => handleNavigate('/login')} variant="outline" className="w-full rounded-2xl py-6">
                                         Login
                                     </Button>
-                                    <Button onClick={() => handleNavigate('/signup')} className="w-full">
+                                    <Button onClick={() => handleNavigate('/signup')} className="w-full rounded-2xl py-6 shadow-md">
                                         Signup
                                     </Button>
-                                </>
+                                </div>
                             }
                         </div>
                     </SheetContent>

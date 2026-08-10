@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import toast from "react-hot-toast";
-import { auth } from "../../Firebase/firebase.config";
+
 
 const MyProfile = () => {
   const { user, setUser, updateUser } = useContext(AuthContext);
@@ -38,8 +38,8 @@ const MyProfile = () => {
     const email = e.target.email.value;
 
     updateUser({ displayName: name, photoURL: image, email: email })
-      .then(() => {
-        setUser({ ...auth.currentUser })
+      .then((formatted) => {
+        setUser(formatted);
         toast.success("Profile Updated Successfully");
       }).catch((error) => {
         toast.error(error.message)

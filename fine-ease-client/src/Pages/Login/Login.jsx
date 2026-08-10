@@ -38,12 +38,10 @@ const Login = () => {
 
     const handleGoogleLogin = () => {
         GoogleLogin()
-            .then((res) => {
-                setUser(res.user);
-                toast.success("Logged in with Google")
-                navigate(location.state || "/");
-            })
-            .catch((error) => toast.error(error.message));
+            .catch((error) => {
+                toast.error(error.message);
+                setLoading(false);
+            });
     };
 
     return (

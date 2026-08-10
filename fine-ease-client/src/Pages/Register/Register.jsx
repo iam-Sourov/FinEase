@@ -38,12 +38,10 @@ const Register = () => {
     
     const handleGoogleLogin = () => {
         GoogleLogin()
-            .then((res) => {
-                setUser(res.user);
-                toast.success("Signed up with Google")
-                navigate(location.state || "/");
-            })
-            .catch((error) => toast.error(error.message));
+            .catch((error) => {
+                toast.error(error.message);
+                setLoading(false);
+            });
     };
 
     return (

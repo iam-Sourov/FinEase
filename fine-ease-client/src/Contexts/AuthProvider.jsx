@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AuthContext } from './AuthContext';
 import { supabase } from '../Supabase/supabase.config';
+import toast from 'react-hot-toast';
 
 const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -59,20 +60,32 @@ const AuthProvider = ({ children }) => {
 
     const GoogleLogin = async () => {
         setLoading(true);
+        localStorage.setItem('show_oauth_toast', 'true');
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
                 redirectTo: window.location.origin
             }
         });
-        if (error) throw error;
+        if (error) {
+            localStorage.removeItem('show_oauth_toast');
+            throw error;
+        }
         return { user: null };
     };
 
     useEffect(() => {
+        const triggerOAuthToast = (session) => {
+            if (session && localStorage.getItem('show_oauth_toast') === 'true') {
+                localStorage.removeItem('show_oauth_toast');
+                toast.success("Logged in with Google successfully!");
+            }
+        };
+
         // Retrieve active session on mount
         supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session ? formatUser(session.user) : null);
+            triggerOAuthToast(session);
             setLoading(false);
         }).catch((err) => {
             console.error("Error retrieving initial session:", err);
@@ -82,6 +95,7 @@ const AuthProvider = ({ children }) => {
         // Listen for authentication changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session ? formatUser(session.user) : null);
+            triggerOAuthToast(session);
             setLoading(false);
         });
 

@@ -55,7 +55,7 @@ app.get('/', async (req, res) => {
         res.send(transactions);
     } catch (error) {
         console.error("Error in GET /:", error);
-        res.status(500).send({ error: "Database error" });
+        res.status(500).send({ error: "Database error", message: error.message });
     }
 });
 

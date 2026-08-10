@@ -22,8 +22,11 @@ if (!databaseUrl) {
     process.exit(1);
 }
 
+// Clean query parameters like ?sslmode=require that override rejectUnauthorized settings in node-postgres pg-connection-string
+const cleanDatabaseUrl = databaseUrl.split('?')[0];
+
 const pool = new Pool({
-    connectionString: databaseUrl,
+    connectionString: cleanDatabaseUrl,
     ssl: databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1') ? false : { rejectUnauthorized: false }
 });
 

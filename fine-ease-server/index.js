@@ -151,4 +151,14 @@ async function startServer() {
     }
 }
 
-startServer();
+// Support local execution vs Vercel Serverless environment
+if (require.main === module) {
+    startServer();
+} else {
+    // Under Vercel Serverless, run db check asynchronously without blocking the server handler export
+    initDb().catch(error => {
+        console.error("❌ Lazy database initialization failed:", error);
+    });
+}
+
+module.exports = app;

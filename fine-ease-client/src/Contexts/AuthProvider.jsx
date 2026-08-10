@@ -9,13 +9,17 @@ const AuthProvider = ({ children }) => {
     // Format Supabase user to mimic Firebase user structure
     const formatUser = (sessionUser) => {
         if (!sessionUser) return null;
+        const name = sessionUser.user_metadata?.display_name || 
+                     sessionUser.user_metadata?.full_name || 
+                     sessionUser.email.split('@')[0];
         return {
             ...sessionUser,
             uid: sessionUser.id,
             email: sessionUser.email,
-            displayName: sessionUser.user_metadata?.display_name || 
-                         sessionUser.user_metadata?.full_name || 
-                         sessionUser.email.split('@')[0]
+            displayName: name,
+            photoURL: sessionUser.user_metadata?.avatar_url || 
+                      sessionUser.user_metadata?.picture || 
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff`
         };
     };
 

@@ -78,7 +78,9 @@ const AuthProvider = ({ children }) => {
         const triggerOAuthToast = (session) => {
             if (session && localStorage.getItem('show_oauth_toast') === 'true') {
                 localStorage.removeItem('show_oauth_toast');
-                toast.success("Logged in with Google successfully!");
+                setTimeout(() => {
+                    toast.success("Logged in with Google successfully!");
+                }, 600);
             }
         };
 

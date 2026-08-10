@@ -62,6 +62,7 @@ const AuthProvider = ({ children }) => {
             }
         });
         if (error) throw error;
+        return { user: null };
     };
 
     useEffect(() => {

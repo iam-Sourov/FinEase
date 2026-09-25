@@ -8,19 +8,21 @@ import toast from "react-hot-toast";
 const Login = () => {
     const { GoogleLogin, LogIn, setUser, setLoading } = useContext(AuthContext);
 
-    const navigate = useNavigate()
+    const navigate = useNavigate();
     const location = useLocation();
 
     const handleLogin = (e) => {
         e.preventDefault();
-        const regEx = /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
+        setLoading(true);
         const email = e.target.email.value;
         const password = e.target.password.value;
-        if (!regEx.test(password)) {
-            toast.error('Password must contain at least one uppercase letter, one lowercase letter, and be at least 6 characters long.')
+
+        if (!email || !password) {
+            toast.error('Please enter both email and password.');
             setLoading(false);
             return;
         }
+
         LogIn(email, password)
             .then((res) => {
                 setUser(res.user);
@@ -28,12 +30,12 @@ const Login = () => {
                 navigate(`${location.state ? location.state : '/'}`);
             })
             .catch(err => {
-                console.log(err);
-                toast.error('Failed to login. Please check credentials.');
+                console.error("Login error:", err);
+                toast.error(err.message || 'Failed to login. Please check credentials.');
             })
             .finally(() => {
-                setLoading(false)
-            })
+                setLoading(false);
+            });
     };
 
     const handleGoogleLogin = () => {

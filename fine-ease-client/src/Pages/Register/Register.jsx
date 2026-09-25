@@ -9,31 +9,41 @@ const Register = () => {
     const { GoogleLogin, signUp, setUser, setLoading } = useContext(AuthContext);
 
     const navigate = useNavigate();
-    const location = useLocation()
+    const location = useLocation();
 
     const handleSubmit = (e) => {
         e.preventDefault();
         setLoading(true);
-        const regEx = /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
-        const email = e.target.email.value;
-        const password = e.target.password.value;
-        if (!regEx.test(password)) {
-            toast.error('Password must contain at least one uppercase letter, one lowercase letter, and be at least 6 characters long.')
+        const name = e.target.name?.value;
+        const email = e.target.email?.value;
+        const photoUrl = e.target.photoUrl?.value;
+        const password = e.target.password?.value;
+
+        if (!email || !password) {
+            toast.error('Please enter email and password.');
             setLoading(false);
             return;
         }
-        signUp(email, password)
+
+        if (password.length < 6) {
+            toast.error('Password must be at least 6 characters long.');
+            setLoading(false);
+            return;
+        }
+
+        signUp(email, password, { name, photoUrl })
             .then((res) => {
                 setUser(res.user);
                 toast.success("Successfully registered!");
                 navigate(`${location.state ? location.state : '/'}`);
             })
             .catch((error) => {
-                toast.error(error.message)
+                console.error("Register error:", error);
+                toast.error(error.message || "Failed to register account.");
             })
             .finally(() => {
-                setLoading(false)
-            })
+                setLoading(false);
+            });
     };
     
     const handleGoogleLogin = () => {
@@ -53,7 +63,7 @@ const Register = () => {
                 
                 <form className="space-y-4" onSubmit={handleSubmit}>
                     <FormInput label="Name" name="name" type="text" placeholder="Your Name" />
-                    <FormInput label="Email" name="email" type="text" placeholder="you@example.com" />
+                    <FormInput label="Email" name="email" type="email" placeholder="you@example.com" />
                     <FormInput label="Photo URL" name="photoUrl" type="text" placeholder="https://..." />
                     <FormInput label="Password" name="password" type="password" placeholder="••••••••" />
                     <Button className="w-full py-6 rounded-2xl font-semibold mt-2 cursor-pointer shadow-md hover:shadow-lg transition-all">

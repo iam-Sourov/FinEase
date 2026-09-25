@@ -24,10 +24,16 @@ const AuthProvider = ({ children }) => {
         };
     };
 
-    const signUp = async (email, password) => {
+    const signUp = async (email, password, metadata = {}) => {
         const { data, error } = await supabase.auth.signUp({
             email,
-            password
+            password,
+            options: {
+                data: {
+                    display_name: metadata.name || '',
+                    avatar_url: metadata.photoUrl || ''
+                }
+            }
         });
         if (error) throw error;
         return { user: formatUser(data.user) };
@@ -49,7 +55,10 @@ const AuthProvider = ({ children }) => {
 
     const updateUser = async (updatedData) => {
         const { data, error } = await supabase.auth.updateUser({
-            data: { display_name: updatedData.displayName }
+            data: { 
+                display_name: updatedData.displayName,
+                avatar_url: updatedData.photoURL
+            }
         });
         if (error) throw error;
         
@@ -79,7 +88,7 @@ const AuthProvider = ({ children }) => {
             if (session && localStorage.getItem('show_oauth_toast') === 'true') {
                 localStorage.removeItem('show_oauth_toast');
                 setTimeout(() => {
-                    toast.success("Logged in with Google successfully!");
+                    toast.success("Logged in successfully!");
                 }, 600);
             }
         };

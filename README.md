@@ -3,8 +3,8 @@
 FinEase is a premium personal finance tracking application designed to help users monitor cashflow, log transactions, and review analytics on category spending.
 
 The application features:
-*   **Database**: PostgreSQL integration (using a connection pool and auto-migration).
-*   **Authentication**: Firebase Authentication.
+*   **Database**: PostgreSQL integration on Supabase (using connection pool and auto-migration).
+*   **Authentication**: Supabase Authentication.
 *   **Aesthetics**: Glassmorphism cards, soft dark theme layouts, and responsive modern dashboard designs.
 *   **Analytics**: Donut charts, custom category legends, monthly trend comparisons, and transaction details logs.
 
@@ -14,83 +14,38 @@ The application features:
 
 This project is structured as a monorepo containing:
 1.  **[fine-ease-client/](file:///Users/apple/Developer/FinEase/fine-ease-client)**: React/Vite frontend application styled with TailwindCSS, shadcn, and Recharts.
-2.  **[fine-ease-server/](file:///Users/apple/Developer/FinEase/fine-ease-server)**: Node.js Express server connecting to PostgreSQL.
+2.  **[fine-ease-server/](file:///Users/apple/Developer/FinEase/fine-ease-server)**: Node.js Express server connecting to PostgreSQL / Supabase.
 
 ---
 
 ## Local Development Setup
 
 ### 1. Requirements
-Ensure you have Node.js and a local PostgreSQL instance running.
+Ensure you have Node.js and a PostgreSQL instance running (or Supabase connection string).
 
 ### 2. Configuration
 *   Create a `.env` file in **`fine-ease-server/`**:
     ```env
-    DATABASE_URL=postgresql://localhost/finease
+    DATABASE_URL=postgresql://postgres.kqwmywrdtfyxrqgisrqw:9J1JASCz3De1U3iE@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require
     PORT=3000
     ```
 *   Create a `.env` file in **`fine-ease-client/`**:
     ```env
     VITE_API_URL=http://localhost:3000
-    VITE_API_KEY=your_firebase_api_key
-    VITE_AUTH_DOMAIN=your_firebase_auth_domain
-    VITE_PROJECT_ID=your_firebase_project_id
-    VITE_STORAGE_BUCKET=your_firebase_storage_bucket
-    VITE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
-    VITE_APP_ID=your_firebase_app_id
+    VITE_SUPABASE_URL=https://kqwmywrdtfyxrqgisrqw.supabase.co
+    VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
     ```
 
-### 3. Execution
-In the root directory of the project, run:
-```bash
-# Install dependencies for both frontend and backend
-npm run install-all
-
-# Run both frontend and backend concurrently in development mode
-npm run dev
-```
-
 ---
 
-## Pushing to GitHub
+## Deployment Guide (Vercel)
 
-Run these commands to commit the restructured workspace and upload it to GitHub:
+### 1. Backend Deployment (`fine-ease-server`)
+*   Deploy the `fine-ease-server/` directory to Vercel. It is configured using the serverless `vercel.json` file.
+*   In the Vercel dashboard, set the **Root Directory** to `fine-ease-server`.
+*   Add the environment variable `DATABASE_URL` pointing to your hosted database.
 
-```bash
-# 1. Stage all changes
-git add .
-
-# 2. Commit the modifications
-git commit -m "feat: migrate database to PostgreSQL, polish UI layouts, and redesign card/modal aesthetics"
-
-# 3. Push to GitHub
-git push origin main
-```
-
----
-
-## Deployment Guide
-
-### 1. PostgreSQL Database Setup
-Set up a hosted PostgreSQL database on [Supabase](https://supabase.com/), [Neon](https://neon.tech/), or [Render](https://render.com/). Retrieve your database connection string:
-```text
-postgresql://<username>:<password>@<host>:<port>/<database>?sslmode=require
-```
-
-### 2. Backend (fine-ease-server)
-*   **Vercel Deployment**:
-    *   Deploy the `fine-ease-server/` directory to Vercel. It is configured out-of-the-box using the serverless [vercel.json](file:///Users/apple/Developer/FinEase/fine-ease-server/vercel.json) file.
-    *   In the Vercel dashboard, add the environment variable `DATABASE_URL` pointing to your hosted database.
-*   **Render Deployment**:
-    *   Create a new Web Service on Render, linking your GitHub repository.
-    *   Set the **Root Directory** to `fine-ease-server`.
-    *   Set the **Build Command** to `npm install`.
-    *   Set the **Start Command** to `node index.js`.
-    *   In the environment settings, add `DATABASE_URL`.
-
-### 3. Frontend (fine-ease-client)
-*   Deploy the `fine-ease-client/` directory to Vercel or Netlify.
-*   The project contains routing configurations (`vercel.json` and `_redirects`) to guarantee Single Page Application (SPA) routes reload correctly without 404 errors.
-*   Configure the environment variables in your deployment dashboard:
-    *   Set `VITE_API_URL` to your deployed backend address (e.g. `https://fine-ease-server.vercel.app` or `https://finease-api.onrender.com`).
-    *   Add your Firebase API keys and secrets (`VITE_API_KEY`, `VITE_AUTH_DOMAIN`, etc.).
+### 2. Frontend Deployment (`fine-ease-client`)
+*   Deploy the `fine-ease-client/` directory to Vercel.
+*   In the Vercel dashboard, set the **Root Directory** to `fine-ease-client`.
+*   Configure the environment variable `VITE_API_URL` pointing to your deployed Vercel backend server URL.

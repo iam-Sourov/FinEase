@@ -54,8 +54,8 @@ const Login = () => {
                 <h2 className="text-3xl font-bold text-center mb-8 tracking-tight text-foreground">Welcome Back</h2>
                 
                 <form className="space-y-5" onSubmit={handleLogin}>
-                    <FormInput label="Email" name="email" type="email" placeholder="you@example.com" />
-                    <FormInput label="Password" name="password" type="password" placeholder="••••••••" />
+                    <FormInput label="Email" name="email" type="email" autoComplete="email" placeholder="you@example.com" />
+                    <FormInput label="Password" name="password" type="password" autoComplete="current-password" placeholder="••••••••" />
                     <Button className="w-full py-6 rounded-2xl font-semibold mt-2 cursor-pointer shadow-md hover:shadow-lg transition-all">
                         Login
                     </Button>

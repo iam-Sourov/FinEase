@@ -62,10 +62,10 @@ const Register = () => {
                 <h2 className="text-3xl font-bold text-center mb-8 tracking-tight text-foreground">Create Account</h2>
                 
                 <form className="space-y-4" onSubmit={handleSubmit}>
-                    <FormInput label="Name" name="name" type="text" placeholder="Your Name" />
-                    <FormInput label="Email" name="email" type="email" placeholder="you@example.com" />
-                    <FormInput label="Photo URL" name="photoUrl" type="text" placeholder="https://..." />
-                    <FormInput label="Password" name="password" type="password" placeholder="••••••••" />
+                    <FormInput label="Name" name="name" type="text" autoComplete="name" placeholder="Your Name" />
+                    <FormInput label="Email" name="email" type="email" autoComplete="email" placeholder="you@example.com" />
+                    <FormInput label="Photo URL" name="photoUrl" type="text" autoComplete="photo" placeholder="https://..." />
+                    <FormInput label="Password" name="password" type="password" autoComplete="new-password" placeholder="••••••••" />
                     <Button className="w-full py-6 rounded-2xl font-semibold mt-2 cursor-pointer shadow-md hover:shadow-lg transition-all">
                         Register
                     </Button>

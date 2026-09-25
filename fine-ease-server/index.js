@@ -11,7 +11,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 let pool = null;
 let dbInitialized = false;
@@ -26,7 +26,10 @@ function getPool() {
         const cleanDatabaseUrl = databaseUrl.split('?')[0];
         pool = new Pool({
             connectionString: cleanDatabaseUrl,
-            ssl: databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1') ? false : { rejectUnauthorized: false }
+            ssl: databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1') ? false : { rejectUnauthorized: false },
+            max: 10,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 5000
         });
     }
     return pool;
@@ -47,6 +50,8 @@ async function queryDb(text, params) {
                 name VARCHAR(255) NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+            CREATE INDEX IF NOT EXISTS idx_transactions_email ON transactions(email);
+            CREATE INDEX IF NOT EXISTS idx_transactions_email_date ON transactions(email, date DESC);
         `;
         await activePool.query(createTableQuery);
         dbInitialized = true;
@@ -55,12 +60,12 @@ async function queryDb(text, params) {
 }
 
 app.get('/health', (req, res) => {
-    res.json({ status: "ok", message: "Server is running on Vercel" });
+    res.json({ status: "ok", message: "Server is online and production ready" });
 });
 
 app.get('/', async (req, res) => {
     try {
-        const result = await queryDb('SELECT * FROM transactions');
+        const result = await queryDb('SELECT * FROM transactions ORDER BY id DESC');
         const transactions = result.rows.map(row => ({
             ...row,
             _id: row.id.toString()
@@ -83,7 +88,7 @@ app.get('/my-transactions', async (req, res) => {
             queryParams.push(email);
         }
 
-        queryText += ' ORDER BY amount DESC, date DESC';
+        queryText += ' ORDER BY date DESC, id DESC';
 
         const result = await queryDb(queryText, queryParams);
         const transactions = result.rows.map(row => ({
@@ -99,12 +104,19 @@ app.get('/my-transactions', async (req, res) => {
 
 app.post('/add-Transaction', async (req, res) => {
     const { type, category, amount, description, date, email, name } = req.body;
+    
+    // Validation
+    const parsedAmount = parseFloat(amount);
+    if (!type || !category || isNaN(parsedAmount) || !date || !email) {
+        return res.status(400).send({ error: "Validation error", message: "Missing or invalid required fields (type, category, amount, date, email)" });
+    }
+
     try {
         const result = await queryDb(
             `INSERT INTO transactions (type, category, amount, description, date, email, name)
              VALUES ($1, $2, $3, $4, $5, $6, $7)
              RETURNING id`,
-            [type, category, amount, description, date, email, name]
+            [type, category, parsedAmount, description || '', date, email, name || '']
         );
         
         res.send({
@@ -119,13 +131,22 @@ app.post('/add-Transaction', async (req, res) => {
 
 app.put('/transactions/update/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+        return res.status(400).send({ error: "Validation error", message: "Invalid transaction ID" });
+    }
+
     const { type, category, amount, description, date } = req.body;
+    const parsedAmount = parseFloat(amount);
+    if (!type || !category || isNaN(parsedAmount) || !date) {
+        return res.status(400).send({ error: "Validation error", message: "Missing or invalid required fields" });
+    }
+
     try {
         const result = await queryDb(
             `UPDATE transactions 
              SET type = $1, category = $2, amount = $3, description = $4, date = $5 
              WHERE id = $6`,
-            [type, category, amount, description, date, id]
+            [type, category, parsedAmount, description || '', date, id]
         );
         
         res.send({
@@ -140,6 +161,10 @@ app.put('/transactions/update/:id', async (req, res) => {
 
 app.delete('/transaction/delete/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+        return res.status(400).send({ error: "Validation error", message: "Invalid transaction ID" });
+    }
+
     try {
         const result = await queryDb('DELETE FROM transactions WHERE id = $1', [id]);
         res.send({

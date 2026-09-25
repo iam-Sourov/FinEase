@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AuthContext } from "../../Contexts/AuthContext";
 import api from '../../lib/api';
 import toast from 'react-hot-toast';
-import sim from '../../../src/assets/sim.svg'
+import sim from '../../../src/assets/sim.svg';
 
 const Overview = () => {
     const { user, setLoading } = useContext(AuthContext);
@@ -35,9 +35,10 @@ const Overview = () => {
         fetchTransactions();
     }, [user, setLoading]);
 
-    if (!user) {
-        return <div className="text-center py-20 text-muted-foreground animate-pulse">Loading your overview...</div>;
-    }
+    const displayBalance = user ? balance : 12450;
+    const displayIncome = user ? income : 8250;
+    const displayExpense = user ? expense : 3800;
+    const cardHolder = user?.displayName || 'DEMO CARD HOLDER';
 
     return (
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,11 +57,11 @@ const Overview = () => {
                     </div>
                     <div className="relative z-10">
                         <div className="text-3xl font-bold tracking-tight mb-2">
-                            ${balance.toLocaleString()}
+                            ${displayBalance.toLocaleString()}
                         </div>
                         <div className="flex flex-col">
                             <span className="text-sm font-medium text-foreground/80">Total Balance</span>
-                            <span className="text-xs text-muted-foreground uppercase tracking-widest mt-1">{user?.displayName || 'Card Holder'}</span>
+                            <span className="text-xs text-muted-foreground uppercase tracking-widest mt-1">{cardHolder}</span>
                         </div>
                     </div>
                 </div>
@@ -78,11 +79,11 @@ const Overview = () => {
                     </div>
                     <div className="relative z-10">
                         <div className="text-3xl font-bold tracking-tight mb-2">
-                            ${income.toLocaleString()}
+                            ${displayIncome.toLocaleString()}
                         </div>
                         <div className="flex flex-col">
                             <span className="text-sm font-medium text-foreground/80">Total Income</span>
-                            <span className="text-xs text-muted-foreground uppercase tracking-widest mt-1">{user?.displayName || 'Card Holder'}</span>
+                            <span className="text-xs text-muted-foreground uppercase tracking-widest mt-1">{cardHolder}</span>
                         </div>
                     </div>
                 </div>
@@ -100,11 +101,11 @@ const Overview = () => {
                     </div>
                     <div className="relative z-10">
                         <div className="text-3xl font-bold tracking-tight mb-2">
-                            ${expense.toLocaleString()}
+                            ${displayExpense.toLocaleString()}
                         </div>
                         <div className="flex flex-col">
                             <span className="text-sm font-medium text-foreground/80">Total Expenses</span>
-                            <span className="text-xs text-muted-foreground uppercase tracking-widest mt-1">{user?.displayName || 'Card Holder'}</span>
+                            <span className="text-xs text-muted-foreground uppercase tracking-widest mt-1">{cardHolder}</span>
                         </div>
                     </div>
                 </div>

@@ -13,44 +13,54 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const databaseUrl = process.env.DATABASE_URL;
+let pool = null;
+let dbInitialized = false;
 
-if (!databaseUrl) {
-    console.error("\n❌ Error: DATABASE_URL environment variable is missing!");
-    console.error("Please create a '.env' file inside the 'fine-ease-server' directory and configure:");
-    console.error("DATABASE_URL=postgresql://<username>:<password>@<hostname>:<port>/<dbname>?sslmode=require\n");
-    process.exit(1);
+function getPool() {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+        throw new Error("DATABASE_URL environment variable is missing. Please set DATABASE_URL in Vercel Environment Variables.");
+    }
+    if (!pool) {
+        // Clean query parameters like ?sslmode=require that override rejectUnauthorized settings in node-postgres pg-connection-string
+        const cleanDatabaseUrl = databaseUrl.split('?')[0];
+        pool = new Pool({
+            connectionString: cleanDatabaseUrl,
+            ssl: databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1') ? false : { rejectUnauthorized: false }
+        });
+    }
+    return pool;
 }
 
-// Clean query parameters like ?sslmode=require that override rejectUnauthorized settings in node-postgres pg-connection-string
-const cleanDatabaseUrl = databaseUrl.split('?')[0];
+async function queryDb(text, params) {
+    const activePool = getPool();
+    if (!dbInitialized) {
+        const createTableQuery = `
+            CREATE TABLE IF NOT EXISTS transactions (
+                id SERIAL PRIMARY KEY,
+                type VARCHAR(50) NOT NULL,
+                category VARCHAR(100) NOT NULL,
+                amount DOUBLE PRECISION NOT NULL,
+                description TEXT,
+                date DATE NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `;
+        await activePool.query(createTableQuery);
+        dbInitialized = true;
+    }
+    return await activePool.query(text, params);
+}
 
-const pool = new Pool({
-    connectionString: cleanDatabaseUrl,
-    ssl: databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1') ? false : { rejectUnauthorized: false }
+app.get('/health', (req, res) => {
+    res.json({ status: "ok", message: "Server is running on Vercel" });
 });
-
-async function initDb() {
-    const createTableQuery = `
-        CREATE TABLE IF NOT EXISTS transactions (
-            id SERIAL PRIMARY KEY,
-            type VARCHAR(50) NOT NULL,
-            category VARCHAR(100) NOT NULL,
-            amount DOUBLE PRECISION NOT NULL,
-            description TEXT,
-            date DATE NOT NULL,
-            email VARCHAR(255) NOT NULL,
-            name VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    `;
-    await pool.query(createTableQuery);
-    console.log("✅ Database initialized and table 'transactions' is ready.");
-}
 
 app.get('/', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM transactions');
+        const result = await queryDb('SELECT * FROM transactions');
         const transactions = result.rows.map(row => ({
             ...row,
             _id: row.id.toString()
@@ -75,7 +85,7 @@ app.get('/my-transactions', async (req, res) => {
 
         queryText += ' ORDER BY amount DESC, date DESC';
 
-        const result = await pool.query(queryText, queryParams);
+        const result = await queryDb(queryText, queryParams);
         const transactions = result.rows.map(row => ({
             ...row,
             _id: row.id.toString()
@@ -83,14 +93,14 @@ app.get('/my-transactions', async (req, res) => {
         res.send(transactions);
     } catch (error) {
         console.error("Error in GET /my-transactions:", error);
-        res.status(500).send({ error: "Database error" });
+        res.status(500).send({ error: "Database error", message: error.message });
     }
 });
 
 app.post('/add-Transaction', async (req, res) => {
     const { type, category, amount, description, date, email, name } = req.body;
     try {
-        const result = await pool.query(
+        const result = await queryDb(
             `INSERT INTO transactions (type, category, amount, description, date, email, name)
              VALUES ($1, $2, $3, $4, $5, $6, $7)
              RETURNING id`,
@@ -103,7 +113,7 @@ app.post('/add-Transaction', async (req, res) => {
         });
     } catch (error) {
         console.error("Error in POST /add-Transaction:", error);
-        res.status(500).send({ error: "Database error" });
+        res.status(500).send({ error: "Database error", message: error.message });
     }
 });
 
@@ -111,7 +121,7 @@ app.put('/transactions/update/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
     const { type, category, amount, description, date } = req.body;
     try {
-        const result = await pool.query(
+        const result = await queryDb(
             `UPDATE transactions 
              SET type = $1, category = $2, amount = $3, description = $4, date = $5 
              WHERE id = $6`,
@@ -124,43 +134,27 @@ app.put('/transactions/update/:id', async (req, res) => {
         });
     } catch (error) {
         console.error("Error in PUT /transactions/update/:id:", error);
-        res.status(500).send({ error: "Database error" });
+        res.status(500).send({ error: "Database error", message: error.message });
     }
 });
 
 app.delete('/transaction/delete/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
     try {
-        const result = await pool.query('DELETE FROM transactions WHERE id = $1', [id]);
+        const result = await queryDb('DELETE FROM transactions WHERE id = $1', [id]);
         res.send({
             acknowledged: true,
             deletedCount: result.rowCount
         });
     } catch (error) {
         console.error("Error in DELETE /transaction/delete/:id:", error);
-        res.status(500).send({ error: "Database error" });
+        res.status(500).send({ error: "Database error", message: error.message });
     }
 });
 
-async function startServer() {
-    try {
-        await initDb();
-        app.listen(port, () => {
-            console.log(`Example app is listening now on port ${port}`);
-        });
-    } catch (error) {
-        console.error("❌ Failed to initialize database or start server:", error);
-        process.exit(1);
-    }
-}
-
-// Support local execution vs Vercel Serverless environment
 if (require.main === module) {
-    startServer();
-} else {
-    // Under Vercel Serverless, run db check asynchronously without blocking the server handler export
-    initDb().catch(error => {
-        console.error("❌ Lazy database initialization failed:", error);
+    app.listen(port, () => {
+        console.log(`Example app is listening now on port ${port}`);
     });
 }
 

@@ -31,7 +31,13 @@ const Login = () => {
             })
             .catch(err => {
                 console.error("Login error:", err);
-                toast.error(err.message || 'Failed to login. Please check credentials.');
+                if (err.message && err.message.includes("Email not confirmed")) {
+                    toast.error("Email not confirmed. Please check your inbox or uncheck 'Confirm email' in Supabase Auth settings.", { duration: 6000 });
+                } else if (err.message && err.message.includes("Invalid login credentials")) {
+                    toast.error("Invalid email or password. Please check your credentials or register a new account.");
+                } else {
+                    toast.error(err.message || 'Failed to login.');
+                }
             })
             .finally(() => {
                 setLoading(false);
@@ -41,7 +47,12 @@ const Login = () => {
     const handleGoogleLogin = () => {
         GoogleLogin()
             .catch((error) => {
-                toast.error(error.message);
+                console.error("Google login error:", error);
+                if (error.message && (error.message.includes("deleted_client") || error.message.includes("OAuth"))) {
+                    toast.error("Google OAuth client was deleted or disabled in Google Cloud Console.", { duration: 5000 });
+                } else {
+                    toast.error(error.message || "Google login failed.");
+                }
                 setLoading(false);
             });
     };

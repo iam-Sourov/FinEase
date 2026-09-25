@@ -25,32 +25,48 @@ const AuthProvider = ({ children }) => {
     };
 
     const signUp = async (email, password, metadata = {}) => {
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    display_name: metadata.name || '',
-                    avatar_url: metadata.photoUrl || ''
+        setLoading(true);
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        display_name: metadata.name || '',
+                        avatar_url: metadata.photoUrl || ''
+                    }
                 }
-            }
-        });
-        if (error) throw error;
-        return { user: formatUser(data.user) };
+            });
+            if (error) throw error;
+            return { user: formatUser(data.user) };
+        } finally {
+            setLoading(false);
+        }
     };
 
     const LogIn = async (email, password) => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password
-        });
-        if (error) throw error;
-        return { user: formatUser(data.user) };
+        setLoading(true);
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+            if (error) throw error;
+            return { user: formatUser(data.user) };
+        } finally {
+            setLoading(false);
+        }
     };
 
     const LogOut = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        setLoading(true);
+        try {
+            const { error } = await supabase.auth.signOut();
+            if (error) throw error;
+            setUser(null);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const updateUser = async (updatedData) => {
@@ -70,20 +86,32 @@ const AuthProvider = ({ children }) => {
     const GoogleLogin = async () => {
         setLoading(true);
         localStorage.setItem('show_oauth_toast', 'true');
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: window.location.origin
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin
+                }
+            });
+            if (error) {
+                localStorage.removeItem('show_oauth_toast');
+                throw error;
             }
-        });
-        if (error) {
-            localStorage.removeItem('show_oauth_toast');
-            throw error;
+            return { user: null };
+        } catch (err) {
+            setLoading(false);
+            throw err;
         }
-        return { user: null };
     };
 
     useEffect(() => {
+        let mounted = true;
+
+        // Safety fallback timer to ensure loading state resolves even on slow networks
+        const safetyTimer = setTimeout(() => {
+            if (mounted) setLoading(false);
+        }, 1500);
+
         const triggerOAuthToast = (session) => {
             if (session && localStorage.getItem('show_oauth_toast') === 'true') {
                 localStorage.removeItem('show_oauth_toast');
@@ -95,22 +123,30 @@ const AuthProvider = ({ children }) => {
 
         // Retrieve active session on mount
         supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session ? formatUser(session.user) : null);
-            triggerOAuthToast(session);
-            setLoading(false);
+            if (mounted) {
+                setUser(session ? formatUser(session.user) : null);
+                triggerOAuthToast(session);
+                setLoading(false);
+            }
         }).catch((err) => {
             console.error("Error retrieving initial session:", err);
-            setLoading(false);
+            if (mounted) setLoading(false);
         });
 
         // Listen for authentication changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session ? formatUser(session.user) : null);
-            triggerOAuthToast(session);
-            setLoading(false);
+            if (mounted) {
+                setUser(session ? formatUser(session.user) : null);
+                triggerOAuthToast(session);
+                setLoading(false);
+            }
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            mounted = false;
+            clearTimeout(safetyTimer);
+            subscription?.unsubscribe();
+        };
     }, []);
 
     const AuthInfo = {
